@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="app-version" content="1.2"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style><title>Court Manager v1.2</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="app-version" content="1.3"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style><title>Court Manager v1.3</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* Layout: club-night scoreboard. Header bar, courts drawn top-down as a grid, queue column beside (stacks on phones). */
@@ -355,7 +355,7 @@ body.timer-only .tabs{display:none!important}
       <div>
         <h1>Court Manager</h1>
         <div class="mode-line" id="modeLine" hidden></div>
-        <div class="sub" id="subline">Connecting…</div><div class="sub" style="font-weight:700;color:var(--win)">Version 1.2 · Offline app: data is saved on this computer</div>
+        <div class="sub" id="subline">Connecting…</div><div class="sub" style="font-weight:700;color:var(--win)">Version 1.3 · Offline app: data is saved on this computer</div>
       </div>
     </div>
     <div class="hdr-actions">
@@ -456,24 +456,55 @@ body.timer-only .tabs{display:none!important}
   const eligible = (s) => waiting(s).filter(id => !s.players[id].sitOut);
   // Picks the next players from the queue: new players first, then up to half the spots each
   // for winners and grinners, longest waiting first. n is 4 for doubles, 2 for singles.
+  // It also mixes players up: near the front of the queue it avoids putting people who just played
+  // together (same court, same game) straight back on court together when another fair choice exists.
   function pickPlayers(s, n) {
-    const q = eligible(s), P = s.players, picks = [], cap = n / 2;
-    for (const id of q) { if (picks.length === n) break; if (P[id].status === "new") picks.push(id); }
-    let w = 0, g = 0;
-    for (const id of q) {
-      if (picks.length === n) break;
-      if (picks.includes(id)) continue;
-      const st = P[id].status;
-      if (st === "winner" && w < cap) { picks.push(id); w++; }
-      else if (st === "grinner" && g < cap) { picks.push(id); g++; }
+    const q = eligible(s), P = s.players, cap = n / 2;
+    if (q.length < n) return null;
+    const idx = new Map(q.map((id, i) => [id, i]));
+    const newAhead = q.filter(id => P[id].status === "new").slice(0, n);
+    // Look a little past the first n players, so there is room to mix without skipping far down the queue.
+    const pool = [...new Set([...newAhead, ...q.slice(0, n + 4)])];
+    const over = (ids) => {
+      const w = ids.filter(id => P[id].status === "winner").length, g = ids.filter(id => P[id].status === "grinner").length;
+      return Math.max(0, w - cap) + Math.max(0, g - cap);
+    };
+    const repeats = (ids) => {
+      let r = 0;
+      for (let a = 0; a < ids.length; a++) for (let b = a + 1; b < ids.length; b++) { const m = P[ids[a]].lastMatch; if (m && m === P[ids[b]].lastMatch) r++; }
+      return r;
+    };
+    // Cost order: never skip a New player, then keep the winner/grinner limits, then avoid repeats, then longest waiting.
+    let best = null;
+    const choose = (start, cur) => {
+      if (cur.length === n) {
+        const missedNew = newAhead.filter(id => !cur.includes(id)).length;
+        const cost = missedNew * 10000 + over(cur) * 100 + repeats(cur) * 40 + cur.reduce((t, id) => t + idx.get(id), 0);
+        if (!best || cost < best.cost) best = { cost, ids: cur.slice() };
+        return;
+      }
+      for (let k = start; k <= pool.length - (n - cur.length); k++) { cur.push(pool[k]); choose(k + 1, cur); cur.pop(); }
+    };
+    choose(0, []);
+    const ids = best.ids.sort((a, b) => idx.get(a) - idx.get(b));
+    if (n === 2) return { teamA: [ids[0]], teamB: [ids[1]] };
+    // Teams: split winners and grinners across the net, and avoid last game's partners where possible.
+    let bt = null;
+    for (const [x, y] of [[[0, 1], [2, 3]], [[0, 2], [1, 3]], [[0, 3], [1, 2]]]) {
+      const A = x.map(k => ids[k]), B = y.map(k => ids[k]);
+      let pen = 0;
+      for (const [a, b] of [A, B]) {
+        if (P[a].status === P[b].status && P[a].status !== "new") pen += 10;
+        if (P[a].lastPartner === b || P[b].lastPartner === a) pen += 5;
+      }
+      if (!bt || pen < bt.pen) bt = { pen, A, B };
     }
-    // If the caps leave gaps, fill from whoever has waited longest so courts never sit idle.
-    for (const id of q) { if (picks.length === n) break; if (!picks.includes(id)) picks.push(id); }
-    if (picks.length < n) return null;
-    if (n === 2) return { teamA: [picks[0]], teamB: [picks[1]] };
-    // Spread statuses across teams so two winners don't stay paired.
-    const ord = picks.slice().sort((a, b) => RANK[P[a].status] - RANK[P[b].status]);
-    return { teamA: [ord[0], ord[2]], teamB: [ord[1], ord[3]] };
+    return { teamA: bt.A, teamB: bt.B };
+  }
+  // True when every picked player was in the same game last time, so the board can't mix them.
+  function sameLastGame(s, ids) {
+    const m = s.players[ids[0]]?.lastMatch;
+    return !!m && ids.every(id => s.players[id]?.lastMatch === m);
   }
   const pickFour = (s) => pickPlayers(s, 4);
   // Keep each player's queue status and place, so a court can be unallocated during walk-on.
@@ -921,11 +952,13 @@ body.timer-only .tabs{display:none!important}
         c.teamA = null; c.teamB = null; c.startedAt = null; delete c.rr;
         return;
       }
+      const mk = `${c.num}@${c.allocAt || c.startedAt || now}`;
       const set = (ids, status, won, off) => ids.forEach((id, i) => {
         const p = s.players[id]; if (!p) return;
         p.status = status; p.since = now + off + i; p.games = (p.games || 0) + 1; if (won) p.wins = (p.wins || 0) + 1; delete p.court;
         if (Number.isFinite(sa) && Number.isFinite(sb)) { const mine = c.teamA.includes(id) ? sa : sb, theirs = c.teamA.includes(id) ? sb : sa; p.pf = (p.pf || 0) + mine; p.pa = (p.pa || 0) + theirs; p.sg = (p.sg || 0) + 1; }
         p.hist = [...(p.hist || []), won ? "W" : "L"].slice(-20);
+        p.lastMatch = mk; p.lastPartner = ids.find(x => x !== id) || null;
       });
       const winIds = winner === "A" ? c.teamA : c.teamB, loseIds = winner === "A" ? c.teamB : c.teamA;
       set(winIds, "winner", true, 0); set(loseIds, "grinner", false, 2);
@@ -936,7 +969,22 @@ body.timer-only .tabs{display:none!important}
     render();
   }
 
-  async function allocateCourt(num, n = 4) {
+  function confirmRepeat(num, n, ids) {
+    render();
+    const ct = String(state.players[ids[0]]?.lastMatch || "").split("@")[0];
+    modal(`
+      <h3>These players have played before</h3>
+      <p><strong>${names(ids)}</strong> just played together${ct ? ` on court ${esc(ct)}` : ""}, and there's nobody else waiting to mix them with.</p>
+      <p>Allocate them to court ${num} anyway, or wait for another match to finish so the board can mix them up?</p>
+      <div class="row"><button type="button" data-close>Wait to mix</button><button type="button" class="btn-sun" id="repGo">Allocate anyway</button></div>`, (close) => {
+      $("repGo").addEventListener("click", () => { close(); allocateCourt(num, n, true); });
+    });
+  }
+  async function allocateCourt(num, n = 4, force = false) {
+    if (!force) {
+      const pick = pickPlayers(state, n);
+      if (pick) { const ids = [...pick.teamA, ...pick.teamB]; if (sameLastGame(state, ids)) return confirmRepeat(num, n, ids); }
+    }
     let short = false;
     const ok = await mutate((s, now) => {
       const c = s.session?.courts.find(c => c.num === num);
