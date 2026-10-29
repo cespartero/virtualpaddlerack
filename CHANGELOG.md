@@ -2,6 +2,11 @@
 
 Newest first.
 
+## v1.2 — 29 October 2026
+
+- **Move a player to the other team** during a doubles match: tap the **⇄** next to their name, then choose which player on the other team swaps across. Works during walk-on and while the match is running. Not shown on singles courts.
+- Quick start guide: the swap is listed under *Fix mistakes on a court*.
+
 ## v1.1 — 29 October 2026
 
 - **Help** button in the header (next to Admin Menu) opens the quick start guide in a new tab, so the board keeps running.

@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="app-version" content="1.1"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style><title>Court Manager v1.1</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="app-version" content="1.2"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style><title>Court Manager v1.2</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* Layout: club-night scoreboard. Header bar, courts drawn top-down as a grid, queue column beside (stacks on phones). */
@@ -51,6 +51,10 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .app-foot a:hover{color:var(--ink);background:var(--surface)}
 .app-foot a:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 body.timer-only .app-foot{display:none}
+.chip.chip-sw{display:inline-flex;align-items:center;gap:6px;padding-right:3px}
+.chip-sw .cn{overflow:hidden;text-overflow:ellipsis}
+.sw{flex:none;min-height:0;width:26px;height:26px;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--bg);color:var(--muted);font-size:14px;line-height:1;display:inline-flex;align-items:center;justify-content:center}
+.sw:hover{color:var(--ink);border-color:var(--muted)}
 .btn-link{display:inline-flex;align-items:center;gap:6px;min-height:44px;box-sizing:border-box;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--ink);font-weight:600;text-decoration:none}
 .btn-link:hover{border-color:var(--muted)}
 .btn-link:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
@@ -351,7 +355,7 @@ body.timer-only .tabs{display:none!important}
       <div>
         <h1>Court Manager</h1>
         <div class="mode-line" id="modeLine" hidden></div>
-        <div class="sub" id="subline">Connecting…</div><div class="sub" style="font-weight:700;color:var(--win)">Version 1.1 · Offline app: data is saved on this computer</div>
+        <div class="sub" id="subline">Connecting…</div><div class="sub" style="font-weight:700;color:var(--win)">Version 1.2 · Offline app: data is saved on this computer</div>
       </div>
     </div>
     <div class="hdr-actions">
@@ -791,6 +795,34 @@ body.timer-only .tabs{display:none!important}
     if (mode === "rr" && c.rr) entry.round = c.rr.r + 1;
     if (mode === "ud") entry.round = s.session.ud.round;
     s.matches = [...(s.matches || []), entry].slice(-300);
+  }
+
+  // Move a player to the other team during a match: they swap places with one player from that team.
+  function chooseSwap(num, id) {
+    const c = state.session && state.session.courts.find(x => x.num === num);
+    if (!c || !c.teamA || c.teamA.length !== 2) return;
+    const inA = c.teamA.includes(id), others = inA ? c.teamB : c.teamA, nm = (x) => esc(state.players[x]?.name || "?");
+    modal(`
+      <h3>Move ${nm(id)}</h3>
+      <p>${nm(id)} moves to the other team on court ${num}. Choose who swaps across to take their place.</p>
+      <div class="win-btns">${others.map(o => `<button type="button" class="btn-sun" data-with="${o}">Swap with ${nm(o)}</button>`).join("")}</div>
+      <button type="button" data-close>Cancel</button>`, (close) => {
+      document.querySelectorAll("#modalRoot [data-with]").forEach(b => b.addEventListener("click", () => { close(); swapPlayers(num, id, b.dataset.with); }));
+    });
+  }
+  async function swapPlayers(num, a, b) {
+    let names = "";
+    const ok = await mutate((s) => {
+      const c = s.session && s.session.courts.find(x => x.num === num);
+      if (!c || !c.teamA || isTour(s)) return false;
+      const ia = c.teamA.indexOf(a), ib = c.teamB.indexOf(b), ja = c.teamB.indexOf(a), jb = c.teamA.indexOf(b);
+      if (ia >= 0 && ib >= 0) { c.teamA[ia] = b; c.teamB[ib] = a; }
+      else if (ja >= 0 && jb >= 0) { c.teamB[ja] = b; c.teamA[jb] = a; }
+      else return false;
+      names = `${s.players[a]?.name || "?"} and ${s.players[b]?.name || "?"}`;
+    });
+    if (ok) toast(`${names} swapped teams on court ${num}`);
+    else toast("Those players aren't on opposite teams on that court any more.");
   }
 
   // Undo an allocation during walk-on: the four players go back to their old queue places and status.
@@ -1476,6 +1508,11 @@ body.timer-only .tabs{display:none!important}
   // ---------- render ----------
   const ago = (t) => { const m = Math.max(0, Math.round((Date.now() - t) / 60000)); return m < 1 ? "just started" : `${m} min`; };
   function chip(id) { const p = state.players[id]; return `<span class="chip">${esc(p ? p.name : "?")}</span>`; }
+  // A player chip with a small button to move that player to the other team (doubles, Virtual Paddle Rack only).
+  function swapChip(id, num) {
+    const n = esc(state.players[id]?.name || "?");
+    return `<span class="chip chip-sw"><span class="cn">${n}</span><button type="button" class="sw" data-swap="${id}" data-court="${num}" aria-label="Move ${n} to the other team" title="Move to the other team">⇄</button></span>`;
+  }
   function names(ids) { return ids.map(id => esc(state.players[id]?.name || "?")).join(" & "); }
 
   // ---------- court layout ----------
@@ -2004,17 +2041,19 @@ body.timer-only .tabs{display:none!important}
           : freeingCourt === c.num ? `<span class="live-msg ending">Entering result</span>`
           : `<span class="live-msg">${udRoundOf(s)}<span class="mt">${ud.timed ? "Match in progress" : `<b class="udclock">${udClock(ud, Date.now())}</b>`}</span></span>`;
         const sgl = c.teamA.length === 1;
+        const canSwap = canWrite && !tour && !sgl && freeingCourt !== c.num;
         const tagA = d ? (d.winner === "A" ? "Won" : "Lost") : sgl ? "Player A" : "Team A", tagB = d ? (d.winner === "B" ? "Won" : "Lost") : sgl ? "Player B" : "Team B";
         return `<div class="court-card"${at}>
           <div class="court-top"><div class="court-num">Court ${c.num}</div></div>
           <div class="court">
             <div class="centre t"></div><div class="centre b"></div><div class="net"></div>
             ${udLive ? udLabel : `<span class="live-msg${freeingCourt === c.num ? " ending" : Date.now() < c.startedAt ? " walk" : ""}"><span class="lm-t">${freeingCourt === c.num ? "Entering result" : Date.now() < c.startedAt ? "Walk on time" : "Match in progress"}</span><span class="mt" ${freeingCourt === c.num ? "" : `data-start="${c.startedAt}"`}><b>${Date.now() < c.startedAt && freeingCourt !== c.num ? fmtDur(c.startedAt - Date.now() + 999) : fmtDur((freeingCourt === c.num && frozenAt ? frozenAt : Date.now()) - c.startedAt)}</b>${freeingCourt === c.num ? " (stopped)" : ""}</span></span>`}
-            <div class="side">${sgl && !d ? '<span class="tag sgl-tag">Singles</span>' : ""}<span class="tag">${tagA}</span><div class="names">${c.teamA.map(chip).join("")}</div></div>
-            <div class="side"><span class="tag">${tagB}</span><div class="names">${c.teamB.map(chip).join("")}</div></div>
+            <div class="side">${sgl && !d ? '<span class="tag sgl-tag">Singles</span>' : ""}<span class="tag">${tagA}</span><div class="names">${c.teamA.map(id => canSwap ? swapChip(id, c.num) : chip(id)).join("")}</div></div>
+            <div class="side"><span class="tag">${tagB}</span><div class="names">${c.teamB.map(id => canSwap ? swapChip(id, c.num) : chip(id)).join("")}</div></div>
           </div>${panel}</div>`;
       }).join("");
       box.querySelectorAll("[data-cancelm]").forEach(b => b.addEventListener("click", () => confirmCancel(+b.dataset.cancelm)));
+      box.querySelectorAll("[data-swap]").forEach(b => b.addEventListener("click", () => chooseSwap(+b.dataset.court, b.dataset.swap)));
       box.querySelectorAll("[data-unalloc]").forEach(b => b.addEventListener("click", () => { b.disabled = true; unallocate(+b.dataset.unalloc); }));
       box.querySelectorAll("[data-manual]").forEach(b => b.addEventListener("click", () => manualAllocate(+b.dataset.manual, +b.dataset.n)));
       box.querySelectorAll("[data-alloc]").forEach(b => b.addEventListener("click", () => { b.disabled = true; allocateCourt(+b.dataset.alloc, +b.dataset.n); }));
