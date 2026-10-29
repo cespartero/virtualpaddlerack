@@ -2,6 +2,11 @@
 
 Newest first.
 
+## v1.1 — 29 October 2026
+
+- **Help** button in the header (next to Admin Menu) opens the quick start guide in a new tab, so the board keeps running.
+- The quick start guide has an **Open Court Manager** button to get back to the board.
+
 ## v1.0 — 28 October 2026
 
 First baseline release of the offline edition.

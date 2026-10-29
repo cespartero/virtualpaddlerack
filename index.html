@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="app-version" content="1.0"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style><title>Court Manager v1.0</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="app-version" content="1.1"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style><title>Court Manager v1.1</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* Layout: club-night scoreboard. Header bar, courts drawn top-down as a grid, queue column beside (stacks on phones). */
@@ -46,6 +46,9 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .btn-sun{background:var(--sun);border-color:var(--sun);color:var(--sun-ink)}
 .btn-sun:hover{border-color:var(--sun-ink)}
 .btn-ghost{background:transparent}
+.btn-link{display:inline-flex;align-items:center;gap:6px;min-height:44px;box-sizing:border-box;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--ink);font-weight:600;text-decoration:none}
+.btn-link:hover{border-color:var(--muted)}
+.btn-link:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .btn-end{background:var(--danger);border-color:var(--danger);color:var(--surface)}
 .btn-end:hover{filter:brightness(1.08);border-color:var(--danger)}
 .btn-danger{color:var(--danger);border-color:var(--danger);background:transparent}
@@ -343,12 +346,13 @@ body.timer-only .tabs{display:none!important}
       <div>
         <h1>Court Manager</h1>
         <div class="mode-line" id="modeLine" hidden></div>
-        <div class="sub" id="subline">Connecting…</div><div class="sub" style="font-weight:700;color:var(--win)">Version 1.0 · Offline app: data is saved on this computer</div>
+        <div class="sub" id="subline">Connecting…</div><div class="sub" style="font-weight:700;color:var(--win)">Version 1.1 · Offline app: data is saved on this computer</div>
       </div>
     </div>
     <div class="hdr-actions">
       <span class="pill" id="sessPill">No session</span>
       <button id="endBtn" class="btn-danger" hidden>End session</button>
+      <a class="btn-link" id="helpLink" href="help.html" target="_blank" rel="noopener" aria-label="Help, opens the quick start guide in a new tab">Help <span aria-hidden="true">↗</span></a>
       <button id="adminBtn" class="btn-ghost">Admin Menu</button>
     </div>
   </header>
