@@ -2,6 +2,10 @@
 
 Newest first.
 
+## v1.4 — 29 October 2026
+
+- **Next up highlight**: during a session, the four players the board will put on the next free court have their queue rows shaded orange and marked **Next up**. It updates as players join, sit out or get allocated.
+
 ## v1.3 — 29 October 2026
 
 - **Players are mixed up when courts are allocated.** Near the front of the queue, the board avoids putting people who just played together straight back on court together. For example, when two courts finish back to back, the next court gets two players from each game instead of the same four again.

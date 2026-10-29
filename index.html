@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="app-version" content="1.3"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style><title>Court Manager v1.3</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="app-version" content="1.4"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style><title>Court Manager v1.4</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* Layout: club-night scoreboard. Header bar, courts drawn top-down as a grid, queue column beside (stacks on phones). */
@@ -171,6 +171,9 @@ ol.queue li.drop-below{box-shadow:inset 0 -3px 0 var(--sun)}
 .btn-back{background:var(--new);border-color:var(--new);color:var(--surface)}
 .btn-back:hover{border-color:var(--ink)}
 .acts{display:flex;gap:6px;justify-content:flex-end}
+ol.queue li.up-next{background:var(--win-bg);border-radius:10px;padding-left:10px;padding-right:10px;border-top-color:transparent}
+ol.queue li.up-next+li{border-top-color:transparent}
+ol.queue li.up-next .pos{color:var(--win)}
 ol.queue li.sitting .pname,ol.queue li.sitting .pos{opacity:.5}
 ol.queue li.sitting .status{opacity:.55}
 .x{min-height:36px;padding:4px 10px;font-size:13px}
@@ -355,7 +358,7 @@ body.timer-only .tabs{display:none!important}
       <div>
         <h1>Court Manager</h1>
         <div class="mode-line" id="modeLine" hidden></div>
-        <div class="sub" id="subline">Connecting…</div><div class="sub" style="font-weight:700;color:var(--win)">Version 1.3 · Offline app: data is saved on this computer</div>
+        <div class="sub" id="subline">Connecting…</div><div class="sub" style="font-weight:700;color:var(--win)">Version 1.4 · Offline app: data is saved on this computer</div>
       </div>
     </div>
     <div class="hdr-actions">
@@ -2167,11 +2170,13 @@ body.timer-only .tabs{display:none!important}
         : `Need ${4 - ready} more ${4 - ready === 1 ? "player" : "players"} to fill a court${sitting ? " (players sitting out aren't counted)" : ""}.`;
     } else nx.hidden = true;
     const admin = isAdmin();
+    // The players the board would put on the next free court get a tinted row.
+    const upNext = new Set(live ? (() => { const pk = pickFour(s); return pk ? [...pk.teamA, ...pk.teamB] : []; })() : []);
     $("queue").innerHTML = q.length ? q.map((id, i) => {
       const p = s.players[id];
       const label = { new: "New", winner: "Winner", grinner: "Grinner" }[p.status];
-      const meta = p.sitOut ? "Sitting out · keeps their place" : p.games ? `${p.games} played · ${p.wins || 0} won` : "Waiting for first game";
-      return `<li data-id="${id}"${p.sitOut ? ' class="sitting"' : ""}><span class="pos">${admin ? `<span class="grip" data-drag="${id}" tabindex="0" role="button" aria-label="Move ${esc(p.name)}. Drag, or use the up and down arrow keys">≡</span>` : ""}${i + 1}</span>
+      const meta = upNext.has(id) ? `<strong style="color:var(--win)">Next up</strong> · ${p.games ? `${p.games} played · ${p.wins || 0} won` : "Waiting for first game"}` : p.sitOut ? "Sitting out · keeps their place" : p.games ? `${p.games} played · ${p.wins || 0} won` : "Waiting for first game";
+      return `<li data-id="${id}"${p.sitOut ? ' class="sitting"' : upNext.has(id) ? ' class="up-next"' : ""}><span class="pos">${admin ? `<span class="grip" data-drag="${id}" tabindex="0" role="button" aria-label="Move ${esc(p.name)}. Drag, or use the up and down arrow keys">≡</span>` : ""}${i + 1}</span>
         <div style="min-width:0"><div class="pname">${esc(p.name)}</div><div class="pmeta">${meta}</div></div>
         ${admin ? `<select class="status status-sel s-${p.status}" data-st="${id}" aria-label="Status for ${esc(p.name)}">${["new", "winner", "grinner"].map(v => `<option value="${v}"${v === p.status ? " selected" : ""}>${{ new: "New", winner: "Winner", grinner: "Grinner" }[v]}</option>`).join("")}</select>` : `<span class="status s-${p.status}">${label}</span>`}
         <div class="acts">${canWrite ? `<button class="x ${p.sitOut ? "btn-back" : "btn-sun"}" data-sit="${id}" aria-pressed="${p.sitOut ? "true" : "false"}" aria-label="${p.sitOut ? "Bring back" : "Sit out"} ${esc(p.name)}">${p.sitOut ? "Back in" : "Sit out"}</button>` : ""}${admin ? `<button class="x btn-ghost" data-rm="${id}" aria-label="Remove ${esc(p.name)}">Remove</button>` : ""}</div></li>`;
