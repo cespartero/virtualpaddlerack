@@ -1,6 +1,6 @@
 # Court Manager
 
-A virtual paddle rack for the Southwest Suns pickleball club. Players add their names to a queue and the board calls them onto a court when it's their turn.
+A virtual paddle rack for pickleball clubs. Players add their names to a queue and the board calls them onto a court when it's their turn.
 
 - **Open the app:** https://cespartero.github.io/virtualpaddlerack/
 - **Quick start guide:** https://cespartero.github.io/virtualpaddlerack/help.html
