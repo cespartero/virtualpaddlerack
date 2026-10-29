@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="app-version" content="1.4"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style><title>Court Manager v1.4</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="app-version" content="1.5"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style><title>Court Manager v1.5</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* Layout: club-night scoreboard. Header bar, courts drawn top-down as a grid, queue column beside (stacks on phones). */
@@ -171,6 +171,19 @@ ol.queue li.drop-below{box-shadow:inset 0 -3px 0 var(--sun)}
 .btn-back{background:var(--new);border-color:var(--new);color:var(--surface)}
 .btn-back:hover{border-color:var(--ink)}
 .acts{display:flex;gap:6px;justify-content:flex-end}
+/* Phones: each queue row becomes two lines, the full name on top and status + buttons underneath. */
+@media (max-width:600px){
+  ol.queue li,ol.queue.reorder li{display:flex;flex-wrap:wrap;align-items:center;column-gap:10px;row-gap:8px}
+  ol.queue li>.pos{flex:none;width:36px}
+  ol.queue.reorder li>.pos{width:62px}
+  ol.queue li>div:not(.acts){flex:1 1 calc(100% - 46px);min-width:0}
+  ol.queue.reorder li>div:not(.acts){flex-basis:calc(100% - 72px)}
+  ol.queue li>.status{margin-left:46px}
+  ol.queue.reorder li>.status{margin-left:0}
+  ol.queue.reorder li>.acts{gap:6px}
+  ol.queue li>.acts{margin-left:auto}
+  ol.queue li .pname{white-space:normal;overflow-wrap:anywhere}
+}
 ol.queue li.up-next{background:var(--win-bg);border-radius:10px;padding-left:10px;padding-right:10px;border-top-color:transparent}
 ol.queue li.up-next+li{border-top-color:transparent}
 ol.queue li.up-next .pos{color:var(--win)}
@@ -358,7 +371,7 @@ body.timer-only .tabs{display:none!important}
       <div>
         <h1>Court Manager</h1>
         <div class="mode-line" id="modeLine" hidden></div>
-        <div class="sub" id="subline">Connecting…</div><div class="sub" style="font-weight:700;color:var(--win)">Version 1.4 · Offline app: data is saved on this computer</div>
+        <div class="sub" id="subline">Connecting…</div><div class="sub" style="font-weight:700;color:var(--win)">Version 1.5 · Offline app: data is saved on this computer</div>
       </div>
     </div>
     <div class="hdr-actions">

@@ -2,6 +2,10 @@
 
 Newest first.
 
+## v1.5 — 29 October 2026
+
+- **Queue names fully visible on phones.** On screens up to 600 px wide, each queue row is two lines: the position and full name on top (long names wrap instead of being cut off), then the status and buttons underneath. With admin unlocked, the status dropdown, Sit out and Remove share one line. Tablets and computers are unchanged.
+
 ## v1.4 — 29 October 2026
 
 - **Next up highlight**: during a session, the four players the board will put on the next free court have their queue rows shaded orange and marked **Next up**. It updates as players join, sit out or get allocated.
