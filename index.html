@@ -46,6 +46,11 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .btn-sun{background:var(--sun);border-color:var(--sun);color:var(--sun-ink)}
 .btn-sun:hover{border-color:var(--sun-ink)}
 .btn-ghost{background:transparent}
+.app-foot{display:flex;justify-content:center;padding-block:8px 28px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.app-foot a{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border-radius:10px;color:var(--muted);font-size:13px;font-weight:600;text-decoration:none}
+.app-foot a:hover{color:var(--ink);background:var(--surface)}
+.app-foot a:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+body.timer-only .app-foot{display:none}
 .btn-link{display:inline-flex;align-items:center;gap:6px;min-height:44px;box-sizing:border-box;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--ink);font-weight:600;text-decoration:none}
 .btn-link:hover{border-color:var(--muted)}
 .btn-link:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
@@ -405,6 +410,8 @@ body.timer-only .tabs{display:none!important}
 <section id="historyView" class="wrap history" hidden></section>
 <section id="statusView" class="wrap history" hidden></section>
 <section id="standView" class="wrap history" hidden></section>
+
+<footer class="app-foot"><a href="https://github.com/cespartero/virtualpaddlerack" target="_blank" rel="noopener" aria-label="Court Manager source code on GitHub, opens in a new tab"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="8 6 2 12 8 18"/><polyline points="16 6 22 12 16 18"/><line x1="14" y1="4" x2="10" y2="20"/></svg><span>Source on GitHub</span></a></footer>
 
 <div id="modalRoot"></div>
 
