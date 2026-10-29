@@ -2,6 +2,13 @@
 
 Newest first.
 
+## v1.3 — 29 October 2026
+
+- **Players are mixed up when courts are allocated.** Near the front of the queue, the board avoids putting people who just played together straight back on court together. For example, when two courts finish back to back, the next court gets two players from each game instead of the same four again.
+- Teams split last game's partners where possible, as well as splitting winners and grinners.
+- **"These players have played before"**: if the only players waiting just played together, tapping Allocate asks whether to **Allocate anyway** or **Wait to mix**.
+- New players still always go on first, and the limit of 2 Winners and 2 Grinners still applies.
+
 ## v1.2 — 29 October 2026
 
 - **Move a player to the other team** during a doubles match: tap the **⇄** next to their name, then choose which player on the other team swaps across. Works during walk-on and while the match is running. Not shown on singles courts.
