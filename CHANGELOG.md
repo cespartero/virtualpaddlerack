@@ -2,6 +2,12 @@
 
 Newest first.
 
+## v1.6 — 2 November 2026
+
+- **Renamed to Virtual Paddle Rack**: the browser tab and the board's heading now say *Virtual Paddle Rack*.
+- **Keep screen on**: a button in the header stops the tablet or phone running the board from dimming or locking. It shows On, Off or Paused, and the choice is remembered on that device. Hidden on browsers that don't support it.
+- **Help QR code** under the queue legend: players scan it with their phone camera to open the quick start guide (it links to the GitHub Pages copy of help.html). Tapping it on the board opens the guide too.
+
 ## v1.5 — 29 October 2026
 
 - **Queue names fully visible on phones.** On screens up to 600 px wide, each queue row is two lines: the position and full name on top (long names wrap instead of being cut off), then the status and buttons underneath. With admin unlocked, the status dropdown, Sit out and Remove share one line. Tablets and computers are unchanged.
